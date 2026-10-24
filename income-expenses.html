@@ -74,9 +74,9 @@
     .history-filter input:focus, .history-filter select:focus { outline: 2px solid #82b99a; outline-offset: 1px; }
     .filter-reset { min-height: 35px; padding: 0 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); background: var(--surface); font-size: 12px; }
     .filter-reset:hover { border-color: var(--green); color: var(--green); }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+    .table-wrap { max-height: 348px; overflow: auto; border: 1px solid var(--line); background: var(--surface); }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { height: 40px; padding: 0 15px; border-bottom: 1px solid var(--line); color: var(--muted); background: #fafbf8; font: 10px "Courier New", monospace; letter-spacing: .7px; text-transform: uppercase; }
+    th { position: sticky; top: 0; z-index: 1; height: 40px; padding: 0 15px; border-bottom: 1px solid var(--line); color: var(--muted); background: #fafbf8; font: 10px "Courier New", monospace; letter-spacing: .7px; text-transform: uppercase; }
     td { height: 61px; padding: 9px 15px; border-bottom: 1px solid #e9ede8; font-size: 13px; white-space: nowrap; }
     tbody tr:last-child td { border-bottom: 0; }
     td.amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
