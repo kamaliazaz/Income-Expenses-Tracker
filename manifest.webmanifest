@@ -1,0 +1,19 @@
+{
+  "id": "./income-expenses.html",
+  "name": "Ledger Personal",
+  "short_name": "Ledger",
+  "description": "A simple personal income and expenses tracker.",
+  "start_url": "./income-expenses.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f1",
+  "theme_color": "#246b4b",
+  "icons": [
+    {
+      "src": "./ledger-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

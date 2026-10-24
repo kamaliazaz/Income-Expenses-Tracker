@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#246b4b">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./ledger-icon.svg" type="image/svg+xml">
+  <title>Ledger / Personal</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f6f1;
+      --surface: #ffffff;
+      --ink: #202923;
+      --muted: #68736b;
+      --line: #dce3dc;
+      --green: #246b4b;
+      --green-soft: #e5f2e9;
+      --red: #b54b45;
+      --red-soft: #f9e9e6;
+      --yellow: #e7c658;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+    body { min-width: 320px; min-height: 100vh; margin: 0; color: var(--ink); background: var(--paper); }
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
+    .shell { width: min(1160px, 100% - 48px); margin: 0 auto; }
+
+    .topbar { border-bottom: 1px solid var(--line); background: #fbfcf9; }
+    .topbar-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: white; font-size: 16px; font-weight: 700; }
+    .brand-name { font-size: 15px; font-weight: 700; }
+    .brand-sub { margin-top: 2px; color: var(--muted); font: 10px "Courier New", monospace; letter-spacing: .8px; text-transform: uppercase; }
+    .toolbar { display: flex; align-items: center; gap: 10px; }
+    .toolbar label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .toolbar select, .toolbar input { height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: var(--surface); font-size: 13px; }
+    .toolbar input { width: 145px; }
+
+    main { padding: 36px 0 54px; }
+    .page-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 23px; }
+    .page-tools { display: grid; justify-items: end; gap: 9px; }
+    .backup-actions { display: flex; gap: 8px; }
+    .backup-button { min-height: 35px; padding: 0 11px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: var(--surface); font-size: 12px; font-weight: 600; }
+    .backup-button:hover { border-color: var(--green); color: var(--green); }
+    .backup-button:focus-visible { outline: 2px solid #82b99a; outline-offset: 2px; }
+    .overline { margin: 0 0 8px; color: var(--green); font: 11px "Courier New", monospace; letter-spacing: 1.1px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 38px); font-weight: 600; line-height: 1.1; }
+    .date-note { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    .local-note { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .local-note::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--green); }
+
+    .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--surface); }
+    .summary-item { min-height: 112px; padding: 20px 23px; }
+    .summary-item + .summary-item { border-left: 1px solid var(--line); }
+    .summary-label { color: var(--muted); font-size: 12px; }
+    .summary-value { margin-top: 12px; font-size: clamp(22px, 3vw, 30px); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: 0; }
+    .summary-item.income .summary-value { color: var(--green); }
+    .summary-item.expense .summary-value { color: var(--red); }
+    .summary-item.balance { border-top: 3px solid var(--yellow); padding-top: 17px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 305px; gap: 24px; margin-top: 28px; align-items: start; }
+    .transactions { min-width: 0; }
+    .section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 13px; }
+    h2 { margin: 0; font-size: 16px; font-weight: 600; }
+    .entry-count { color: var(--muted); font: 11px "Courier New", monospace; }
+    .history-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 9px; margin: 0 0 12px; }
+    .history-filter { display: grid; min-width: 0; gap: 5px; }
+    .history-filter label { color: var(--muted); font-size: 11px; }
+    .history-filter input, .history-filter select { width: 100%; min-width: 0; height: 35px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: var(--surface); font-size: 12px; }
+    .history-filter input:focus, .history-filter select:focus { outline: 2px solid #82b99a; outline-offset: 1px; }
+    .filter-reset { min-height: 35px; padding: 0 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); background: var(--surface); font-size: 12px; }
+    .filter-reset:hover { border-color: var(--green); color: var(--green); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { height: 40px; padding: 0 15px; border-bottom: 1px solid var(--line); color: var(--muted); background: #fafbf8; font: 10px "Courier New", monospace; letter-spacing: .7px; text-transform: uppercase; }
+    td { height: 61px; padding: 9px 15px; border-bottom: 1px solid #e9ede8; font-size: 13px; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.amount { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+    th.amount-head { text-align: right; }
+    .transaction-name { font-weight: 600; }
+    .transaction-category { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .type-label { display: inline-block; padding: 4px 7px; border-radius: 3px; font-size: 10px; }
+    .type-label.income { color: var(--green); background: var(--green-soft); }
+    .type-label.expense { color: var(--red); background: var(--red-soft); }
+    .delete-button { width: 30px; height: 30px; border: 0; border-radius: 4px; color: var(--muted); background: transparent; font-size: 19px; line-height: 1; }
+    .delete-button:hover, .delete-button:focus-visible { color: var(--red); background: var(--red-soft); }
+    .empty-state { padding: 34px 16px; color: var(--muted); text-align: center; font-size: 13px; }
+
+    .entry-panel { padding: 19px; border: 1px solid var(--line); border-top: 3px solid var(--green); background: var(--surface); }
+    .entry-panel h2 { margin-bottom: 18px; }
+    .field { display: grid; gap: 6px; margin-bottom: 13px; }
+    .field label { color: #465149; font-size: 12px; font-weight: 600; }
+    .field input, .field select { width: 100%; height: 39px; padding: 0 10px; border: 1px solid #cfd8cf; border-radius: 4px; color: var(--ink); background: white; font-size: 13px; }
+    .field input:focus, .field select:focus, .toolbar input:focus, .toolbar select:focus { outline: 2px solid #82b99a; outline-offset: 1px; }
+    .submit-button { width: 100%; min-height: 42px; margin-top: 3px; border: 0; border-radius: 4px; color: white; background: var(--green); font-size: 13px; font-weight: 600; }
+    .submit-button:hover { background: #1c583d; }
+    .submit-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    .form-hint { margin: 11px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+    @media (max-width: 780px) {
+      .workspace { grid-template-columns: minmax(0, 1fr) 270px; gap: 16px; }
+      .summary-item { padding: 17px; }
+      td, th { padding-right: 11px; padding-left: 11px; }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 32px, 520px); }
+      .topbar-inner { min-height: 64px; gap: 6px; }
+      .toolbar { gap: 5px; }
+      .toolbar label { gap: 5px; font-size: 0; }
+      .toolbar label span { display: none; }
+      .toolbar input { width: 100px; }
+      .toolbar select { width: 68px; max-width: 68px; padding: 0 5px; }
+      main { padding-top: 27px; }
+      .page-heading { align-items: start; flex-direction: column; gap: 13px; margin-bottom: 18px; }
+      .page-tools { justify-items: start; gap: 8px; }
+      .summary-item { min-height: 90px; padding: 14px 11px; }
+      .summary-label { font-size: 10px; }
+      .summary-value { margin-top: 10px; font-size: clamp(16px, 5vw, 23px); }
+      .summary-item.balance { padding-top: 11px; }
+      .workspace { grid-template-columns: 1fr; gap: 24px; margin-top: 22px; }
+      .entry-panel { grid-row: 1; }
+      .transactions { grid-row: 2; }
+      .history-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-wrap { margin-right: -1px; }
+      table { width: 100%; min-width: 0; table-layout: fixed; }
+      th, td { padding-right: 6px; padding-left: 6px; }
+      th:nth-child(1), td:nth-child(1) { display: none; }
+      th:nth-child(2), td:nth-child(2) { width: 39%; }
+      th:nth-child(3), td:nth-child(3) { width: 20%; }
+      th:nth-child(4), td:nth-child(4) { width: 28%; }
+      th:nth-child(5), td:nth-child(5) { width: 13%; }
+      td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; }
+      .delete-button { width: 28px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="income-expenses.html" aria-label="Ledger home">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span><span class="brand-name">Ledger</span><span class="brand-sub" style="display:block">Personal</span></span>
+      </a>
+      <div class="toolbar">
+        <label for="month-filter"><span>Month</span><input id="month-filter" type="month" aria-label="Filter by month"></label>
+        <label for="currency"><span>Currency</span>
+          <select id="currency" aria-label="Currency">
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="GBP">GBP £</option>
+            <option value="INR">INR ₹</option>
+            <option value="CAD">CAD $</option>
+            <option value="AUD">AUD $</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="page-heading">
+      <div>
+        <p class="overline">Your money, at a glance</p>
+        <h1>Income &amp; expenses</h1>
+        <p class="date-note" id="period-label">Monthly overview</p>
+      </div>
+      <div class="page-tools">
+        <div class="backup-actions">
+          <button class="backup-button" id="download-backup" type="button">Download backup</button>
+          <button class="backup-button" id="restore-backup" type="button">Restore backup</button>
+          <input class="visually-hidden" id="backup-file" type="file" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+        </div>
+        <span class="local-note" role="status" aria-live="polite">Saved on this device</span>
+      </div>
+    </div>
+
+    <section class="summary" aria-label="Filtered transaction totals" aria-live="polite">
+      <div class="summary-item balance"><div class="summary-label">Net balance</div><div class="summary-value" id="balance-total">$0.00</div></div>
+      <div class="summary-item income"><div class="summary-label">Income</div><div class="summary-value" id="income-total">$0.00</div></div>
+      <div class="summary-item expense"><div class="summary-label">Expenses</div><div class="summary-value" id="expense-total">$0.00</div></div>
+    </section>
+
+    <div class="workspace">
+      <section class="transactions" aria-labelledby="transactions-title">
+        <div class="section-heading"><h2 id="transactions-title">Transactions</h2><span class="entry-count" id="entry-count">0 entries</span></div>
+        <div class="history-filters" role="group" aria-label="Filter transactions">
+          <div class="history-filter"><label for="history-from">Start date</label><input id="history-from" type="date"></div>
+          <div class="history-filter"><label for="history-to">End date</label><input id="history-to" type="date"></div>
+          <div class="history-filter"><label for="history-type">Type</label><select id="history-type"><option value="all">All types</option><option value="income">Income</option><option value="expense">Expense</option></select></div>
+          <button class="filter-reset" id="clear-history-filters" type="button">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Date</th><th scope="col">Description</th><th scope="col">Type</th><th scope="col" class="amount-head">Amount</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody id="transaction-list"></tbody>
+          </table>
+          <div class="empty-state" id="empty-state">No transactions for this month yet.</div>
+        </div>
+      </section>
+
+      <aside class="entry-panel" aria-labelledby="form-title">
+        <h2 id="form-title">Add transaction</h2>
+        <form id="transaction-form">
+          <div class="field">
+            <label for="type">Type</label>
+            <select id="type" name="type"><option value="expense">Expense</option><option value="income">Income</option></select>
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <input id="description" name="description" type="text" maxlength="60" placeholder="e.g. Weekly groceries" required>
+          </div>
+          <div class="field">
+            <label for="category">Category</label>
+            <select id="category" name="category"></select>
+          </div>
+          <div class="field">
+            <label for="amount">Amount</label>
+            <input id="amount" name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field">
+            <label for="date">Date</label>
+            <input id="date" name="date" type="date" required>
+          </div>
+          <button class="submit-button" type="submit">Add transaction</button>
+          <p class="form-hint">Your entries stay in this browser and are not uploaded.</p>
+        </form>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const storageKey = "ledger-personal-transactions-v1";
+    const currencyKey = "ledger-personal-currency-v1";
+    const categories = {
+      expense: ["Food & groceries", "Housing", "Transport", "Bills", "Health", "Shopping", "Entertainment", "Other"],
+      income: ["Salary", "Freelance", "Investments", "Gift", "Other"]
+    };
+    const form = document.querySelector("#transaction-form");
+    const typeInput = document.querySelector("#type");
+    const categoryInput = document.querySelector("#category");
+    const monthFilter = document.querySelector("#month-filter");
+    const currencyInput = document.querySelector("#currency");
+    const historyFrom = document.querySelector("#history-from");
+    const historyTo = document.querySelector("#history-to");
+    const historyType = document.querySelector("#history-type");
+    const transactionList = document.querySelector("#transaction-list");
+    const emptyState = document.querySelector("#empty-state");
+    const backupFileInput = document.querySelector("#backup-file");
+    let transactions = loadTransactions();
+
+    function localDateString(date = new Date()) {
+      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return offsetDate.toISOString().slice(0, 10);
+    }
+
+    function isValidTransaction(item) {
+      return item && typeof item.id === "string" &&
+        (item.type === "income" || item.type === "expense") &&
+        typeof item.description === "string" && item.description.trim().length > 0 &&
+        typeof item.category === "string" && Number.isFinite(item.amount) && item.amount > 0 &&
+        typeof item.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.date) &&
+        Number.isFinite(item.createdAt);
+    }
+
+    function loadTransactions() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        return Array.isArray(saved) ? saved.filter(isValidTransaction) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTransactions() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(transactions));
+      } catch {
+        document.querySelector(".local-note").textContent = "Browser storage unavailable";
+      }
+    }
+
+    function downloadBackup() {
+      const backup = {
+        app: "ledger-personal",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        currency: currencyInput.value,
+        transactions
+      };
+      const file = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ledger-backup-${localDateString()}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      document.querySelector(".local-note").textContent = "Backup downloaded";
+    }
+
+    async function restoreBackup(file) {
+      const backup = JSON.parse(await file.text());
+      const validCurrency = [...currencyInput.options].some((option) => option.value === backup.currency);
+      if (backup.app !== "ledger-personal" || backup.version !== 1 ||
+          !Array.isArray(backup.transactions) || !backup.transactions.every(isValidTransaction) || !validCurrency) {
+        throw new Error("Invalid backup file");
+      }
+      if (!window.confirm(`Restore ${backup.transactions.length} transactions? This replaces the current data.`)) return;
+
+      const previousTransactions = transactions;
+      const previousCurrency = currencyInput.value;
+      transactions = backup.transactions;
+      currencyInput.value = backup.currency;
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(transactions));
+        localStorage.setItem(currencyKey, currencyInput.value);
+      } catch {
+        transactions = previousTransactions;
+        currencyInput.value = previousCurrency;
+        document.querySelector(".local-note").textContent = "Could not save restored data";
+        return;
+      }
+      monthFilter.value = "";
+      renderTransactions();
+      document.querySelector(".local-note").textContent = "Backup restored";
+    }
+
+    function formatMoney(amount) {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: currencyInput.value }).format(amount);
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" })
+        .format(new Date(`${date}T12:00:00`));
+    }
+
+    function updateCategories() {
+      categoryInput.replaceChildren(...categories[typeInput.value].map((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        return option;
+      }));
+    }
+
+    function selectedTransactions() {
+      const month = monthFilter.value;
+      const startDate = historyFrom.value;
+      const endDate = historyTo.value;
+      const type = historyType.value;
+      return transactions
+        .filter((item) => (!month || item.date.startsWith(month)) &&
+          (!startDate || item.date >= startDate) &&
+          (!endDate || item.date <= endDate) &&
+          (type === "all" || item.type === type))
+        .sort((first, second) => second.date.localeCompare(first.date) || second.createdAt - first.createdAt);
+    }
+
+    function makeCell(className, text) {
+      const cell = document.createElement("td");
+      if (className) cell.className = className;
+      cell.textContent = text;
+      return cell;
+    }
+
+    function renderTransactions() {
+      const visible = selectedTransactions();
+      let income = 0;
+      let expenses = 0;
+      for (const item of visible) {
+        if (item.type === "income") income += item.amount;
+        else expenses += item.amount;
+      }
+
+      document.querySelector("#income-total").textContent = formatMoney(income);
+      document.querySelector("#expense-total").textContent = formatMoney(expenses);
+      document.querySelector("#balance-total").textContent = formatMoney(income - expenses);
+      document.querySelector("#entry-count").textContent = `${visible.length} ${visible.length === 1 ? "entry" : "entries"}`;
+      document.querySelector("#period-label").textContent = monthFilter.value
+        ? new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(new Date(`${monthFilter.value}-15T12:00:00`))
+        : "All transactions";
+      emptyState.hidden = visible.length > 0;
+      transactionList.replaceChildren();
+
+      for (const item of visible) {
+        const row = document.createElement("tr");
+        row.append(makeCell("", formatDate(item.date)));
+
+        const descriptionCell = document.createElement("td");
+        const name = document.createElement("div");
+        name.className = "transaction-name";
+        name.textContent = item.description;
+        const category = document.createElement("div");
+        category.className = "transaction-category";
+        category.textContent = item.category;
+        descriptionCell.append(name, category);
+        row.append(descriptionCell);
+
+        const typeCell = document.createElement("td");
+        const badge = document.createElement("span");
+        badge.className = `type-label ${item.type}`;
+        badge.textContent = item.type === "income" ? "Income" : "Expense";
+        typeCell.append(badge);
+        row.append(typeCell);
+
+        const amountCell = makeCell("amount", `${item.type === "income" ? "+" : "−"}${formatMoney(item.amount)}`);
+        amountCell.style.color = item.type === "income" ? "var(--green)" : "var(--red)";
+        row.append(amountCell);
+
+        const actionCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-button";
+        deleteButton.type = "button";
+        deleteButton.textContent = "×";
+        deleteButton.setAttribute("aria-label", `Delete ${item.description}`);
+        deleteButton.dataset.deleteId = item.id;
+        actionCell.append(deleteButton);
+        row.append(actionCell);
+        transactionList.append(row);
+      }
+    }
+
+    typeInput.addEventListener("change", updateCategories);
+    monthFilter.addEventListener("input", renderTransactions);
+    historyFrom.addEventListener("input", renderTransactions);
+    historyTo.addEventListener("input", renderTransactions);
+    historyType.addEventListener("change", renderTransactions);
+    document.querySelector("#clear-history-filters").addEventListener("click", () => {
+      monthFilter.value = "";
+      historyFrom.value = "";
+      historyTo.value = "";
+      historyType.value = "all";
+      renderTransactions();
+    });
+    currencyInput.addEventListener("change", () => {
+      try { localStorage.setItem(currencyKey, currencyInput.value); } catch {}
+      renderTransactions();
+    });
+    document.querySelector("#download-backup").addEventListener("click", downloadBackup);
+    document.querySelector("#restore-backup").addEventListener("click", () => backupFileInput.click());
+    backupFileInput.addEventListener("change", async () => {
+      const file = backupFileInput.files[0];
+      if (!file) return;
+      try {
+        await restoreBackup(file);
+      } catch {
+        document.querySelector(".local-note").textContent = "Invalid backup file";
+      } finally {
+        backupFileInput.value = "";
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const formData = new FormData(form);
+      const amount = Number(formData.get("amount"));
+      if (!Number.isFinite(amount) || amount <= 0) return;
+
+      const transaction = {
+        id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+        type: String(formData.get("type")),
+        description: String(formData.get("description")).trim(),
+        category: String(formData.get("category")),
+        amount: Math.round(amount * 100) / 100,
+        date: String(formData.get("date")),
+        createdAt: Date.now()
+      };
+      if (!transaction.description) return;
+      transactions.push(transaction);
+      saveTransactions();
+      if (!monthFilter.value || transaction.date.startsWith(monthFilter.value)) renderTransactions();
+      else {
+        monthFilter.value = transaction.date.slice(0, 7);
+        renderTransactions();
+      }
+      form.reset();
+      document.querySelector("#date").value = localDateString();
+      updateCategories();
+      document.querySelector("#description").focus();
+    });
+
+    transactionList.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-delete-id]");
+      if (!button) return;
+      transactions = transactions.filter((item) => item.id !== button.dataset.deleteId);
+      saveTransactions();
+      renderTransactions();
+    });
+
+    monthFilter.value = localDateString().slice(0, 7);
+    document.querySelector("#date").value = localDateString();
+    try {
+      const savedCurrency = localStorage.getItem(currencyKey);
+      if ([...currencyInput.options].some((option) => option.value === savedCurrency)) currencyInput.value = savedCurrency;
+    } catch {}
+    updateCategories();
+    renderTransactions();
+
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("./sw.js").catch((error) => console.error("PWA setup failed", error));
+    }
+  </script>
+</body>
+</html>
